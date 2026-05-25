@@ -4,6 +4,7 @@ defmodule ComparisonApp.PairingTest do
   alias ComparisonApp.Comparisons.Comparison
   alias ComparisonApp.Pairing
   alias ComparisonApp.Streamers.Streamer
+  alias ComparisonApp.VoterExclusions
 
   defp insert_streamer(login) do
     %Streamer{}
@@ -53,6 +54,21 @@ defmodule ComparisonApp.PairingTest do
 
       # third streamer allows other pairs
       assert s3.active
+    end
+
+    test "excludes streamers blocked for ip_hash" do
+      s1 = insert_streamer("x")
+      _s2 = insert_streamer("y")
+      _s3 = insert_streamer("z")
+
+      ip = VoterExclusions.hash_ip_string("10.0.0.99")
+      VoterExclusions.block_streamers(ip, [s1.id])
+
+      for _ <- 1..15 do
+        {:ok, {left, right}} = Pairing.next_pair("session-ip", ip)
+        refute left.id == s1.id
+        refute right.id == s1.id
+      end
     end
   end
 end

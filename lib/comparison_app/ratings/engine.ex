@@ -8,14 +8,15 @@ defmodule ComparisonApp.Ratings.Engine do
   alias ComparisonApp.Ratings.Snapshot
   alias ComparisonApp.Repo
   alias ComparisonApp.Streamers.Streamer
+  alias ComparisonApp.VoterExclusions
   alias Ecto.Multi
   alias Phoenix.PubSub
 
   @tau 0.5
 
-  @spec submit_vote(Streamer.t(), Streamer.t(), atom(), String.t()) ::
+  @spec submit_vote(Streamer.t(), Streamer.t(), atom(), String.t(), String.t() | nil) ::
           {:ok, map()} | {:error, term()}
-  def submit_vote(%Streamer{} = left, %Streamer{} = right, outcome, session_id) do
+  def submit_vote(%Streamer{} = left, %Streamer{} = right, outcome, session_id, ip_hash \\ nil) do
     {a_id, b_id} = Comparison.canonical_pair(left, right)
     a = if left.id == a_id, do: left, else: right
     b = if left.id == b_id, do: left, else: right
@@ -40,6 +41,10 @@ defmodule ComparisonApp.Ratings.Engine do
       |> maybe_update_streamer(:streamer_b, b, b_after, now)
       |> maybe_snapshot(:snapshot_a, :streamer_a, :comparison)
       |> maybe_snapshot(:snapshot_b, :streamer_b, :comparison)
+      |> Multi.run(:exclusions, fn _repo, _changes ->
+        block_for_unknown(ip_hash, outcome, a, b)
+        {:ok, :blocked}
+      end)
 
     case Repo.transaction(multi) do
       {:ok, result} ->
@@ -106,4 +111,31 @@ defmodule ComparisonApp.Ratings.Engine do
   def outcome_to_update(:unknown_a), do: {0.0, false, true}
   def outcome_to_update(:unknown_b), do: {1.0, true, false}
   def outcome_to_update(:unknown_both), do: {0.5, false, false}
+
+  defp block_for_unknown(nil, _outcome, _a, _b), do: :ok
+
+  defp block_for_unknown(ip_hash, outcome, a, b) do
+    ids =
+      case outcome do
+        :unknown_a -> [a.id]
+        :unknown_b -> [b.id]
+        :unknown_both -> [a.id, b.id]
+        _ -> []
+      end
+
+    if ids != [] do
+      VoterExclusions.block_streamers(ip_hash, ids)
+    end
+
+    :ok
+  end
+
+  def streamers_to_block(outcome, a, b) do
+    case outcome do
+      :unknown_a -> [a.id]
+      :unknown_b -> [b.id]
+      :unknown_both -> [a.id, b.id]
+      _ -> []
+    end
+  end
 end

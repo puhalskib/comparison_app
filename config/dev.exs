@@ -1,5 +1,8 @@
 import Config
 
+# Load .env at app start (see ComparisonApp.Application and .env.example)
+config :comparison_app, load_dotenv: true
+
 # Configure your database
 config :comparison_app, ComparisonApp.Repo,
   username: "postgres",

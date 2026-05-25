@@ -9,7 +9,8 @@ defmodule ComparisonAppWeb.CompareLive do
   @impl true
   def mount(_params, _session, socket) do
     session_id = socket.assigns.session_id
-    socket = assign_pair(socket, session_id)
+    ip_hash = socket.assigns.ip_hash
+    socket = assign_pair(socket, session_id, ip_hash)
     {:ok, socket}
   end
 
@@ -73,7 +74,7 @@ defmodule ComparisonAppWeb.CompareLive do
   end
 
   def handle_event("next_pair", _params, socket) do
-    {:noreply, assign_pair(socket, socket.assigns.session_id)}
+    {:noreply, assign_pair(socket, socket.assigns.session_id, socket.assigns.ip_hash)}
   end
 
   defp handle_vote(socket, ui_outcome, position) do
@@ -84,11 +85,12 @@ defmodule ComparisonAppWeb.CompareLive do
         {other, _} -> other
       end
 
-    %{left: left, right: right, session_id: session_id, voted: false} = socket.assigns
+    %{left: left, right: right, session_id: session_id, ip_hash: ip_hash, voted: false} =
+      socket.assigns
 
     outcome = Votes.map_ui_outcome(ui_outcome, left, right)
 
-    case Engine.submit_vote(left, right, outcome, session_id) do
+    case Engine.submit_vote(left, right, outcome, session_id, ip_hash) do
       {:ok, _} ->
         {:noreply, assign(socket, voted: true)}
 
@@ -101,8 +103,8 @@ defmodule ComparisonAppWeb.CompareLive do
     end
   end
 
-  defp assign_pair(socket, session_id) do
-    case Pairing.next_pair(session_id) do
+  defp assign_pair(socket, session_id, ip_hash) do
+    case Pairing.next_pair(session_id, ip_hash) do
       {:ok, {left, right}} ->
         assign(socket,
           left: left,

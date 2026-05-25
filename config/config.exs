@@ -10,6 +10,7 @@ import Config
 config :comparison_app,
   ecto_repos: [ComparisonApp.Repo],
   generators: [timestamp_type: :utc_datetime],
+  ip_hash_salt: System.get_env("IP_HASH_SALT") || "",
   curated_streamer_logins: [
     "ninja",
     "shroud",

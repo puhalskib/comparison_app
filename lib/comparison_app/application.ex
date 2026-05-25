@@ -7,6 +7,8 @@ defmodule ComparisonApp.Application do
 
   @impl true
   def start(_type, _args) do
+    load_dotenv()
+
     children = [
       ComparisonAppWeb.Telemetry,
       ComparisonApp.Repo,
@@ -31,5 +33,16 @@ defmodule ComparisonApp.Application do
   def config_change(changed, _new, removed) do
     ComparisonAppWeb.Endpoint.config_change(changed, removed)
     :ok
+  end
+
+  defp load_dotenv do
+    if Application.get_env(:comparison_app, :load_dotenv) && Code.ensure_loaded?(Dotenvy) do
+      env_file = Path.expand(".env", File.cwd!())
+
+      if File.exists?(env_file) do
+        vars = Dotenvy.source!([env_file, System.get_env()])
+        System.put_env(vars)
+      end
+    end
   end
 end

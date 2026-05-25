@@ -5,6 +5,8 @@ defmodule ComparisonApp.Ratings.EngineTest do
   alias ComparisonApp.Ratings.Engine
   alias ComparisonApp.Ratings.Snapshot
   alias ComparisonApp.Streamers.Streamer
+  alias ComparisonApp.VoterExclusions
+  alias ComparisonApp.VoterExclusions.Exclusion
 
   defp insert_streamer(login, rating \\ 1500.0) do
     %Streamer{}
@@ -88,6 +90,14 @@ defmodule ComparisonApp.Ratings.EngineTest do
     test "rejects duplicate session pair vote", %{a: a, b: b} do
       assert {:ok, _} = Engine.submit_vote(a, b, :liked_a, "sess-dup")
       assert {:error, _} = Engine.submit_vote(a, b, :liked_b, "sess-dup")
+    end
+
+    test "unknown_a blocks streamer a for ip", %{a: a, b: b} do
+      ip = VoterExclusions.hash_ip_string("192.168.1.10")
+      assert {:ok, _} = Engine.submit_vote(a, b, :unknown_a, "sess-ip", ip)
+
+      assert Repo.get_by(Exclusion, ip_hash: ip, streamer_id: a.id)
+      refute Repo.get_by(Exclusion, ip_hash: ip, streamer_id: b.id)
     end
   end
 end

@@ -9,12 +9,39 @@ defmodule ComparisonApp.Streamers do
     |> Repo.all()
   end
 
-  def list_leaderboard do
+  def list_top_active(limit \\ 100) do
     from(s in Streamer,
       where: s.active == true,
-      order_by: [desc: s.rating, asc: s.rd, desc: s.comparison_count]
+      order_by: [desc: s.rating, asc: s.rd],
+      limit: ^limit
     )
     |> Repo.all()
+  end
+
+  def list_leaderboard do
+    list_top_active(100)
+  end
+
+  def prune_active_to_top(limit \\ 100) do
+    top_ids =
+      from(s in Streamer,
+        order_by: [desc: s.rating, asc: s.rd, asc: s.id],
+        limit: ^limit,
+        select: s.id
+      )
+      |> Repo.all()
+
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+    set_active = [active: true, updated_at: now]
+    set_inactive = [active: false, updated_at: now]
+
+    from(s in Streamer, where: s.id in ^top_ids)
+    |> Repo.update_all(set: set_active)
+
+    from(s in Streamer, where: s.id not in ^top_ids)
+    |> Repo.update_all(set: set_inactive)
+
+    :ok
   end
 
   def get!(id), do: Repo.get!(Streamer, id)

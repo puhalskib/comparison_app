@@ -9,6 +9,7 @@ defmodule ComparisonAppWeb.Router do
     plug :protect_from_forgery
     plug :put_secure_browser_headers
     plug ComparisonAppWeb.Plugs.SessionId
+    plug ComparisonAppWeb.Plugs.ClientIp
   end
 
   pipeline :api do

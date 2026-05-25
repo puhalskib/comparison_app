@@ -13,6 +13,7 @@ defmodule ComparisonApp.Streamers.SyncWorker do
     if twitch_configured?() do
       sync_curated()
       sync_top_live()
+      Streamers.prune_active_to_top(100)
       :ok
     else
       :ok

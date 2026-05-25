@@ -21,13 +21,27 @@ mix phx.server
 
 ## Twitch sync (optional)
 
-Copy `.env.example` to `.env` (or export vars), set `TWITCH_CLIENT_ID` and `TWITCH_CLIENT_SECRET`, then:
+Copy `.env.example` to `.env` and fill in your Twitch app credentials (loaded automatically in dev):
+
+```bash
+cp .env.example .env
+```
+
+Then run:
 
 ```bash
 mix run -e "ComparisonApp.Streamers.SyncWorker.new(%{}) |> Oban.insert!()"
 ```
 
 Oban also runs a cron sync every 6 hours when credentials are present.
+
+## Ratings periods
+
+On `/ratings`, filter the top-100 leaderboard and history charts by: All time, Last year, Last 6 months, Last month, Last 7 days, Last 24 hours. Timestamps are shown in UTC.
+
+## Unknown streamer cooldown
+
+If you vote that you don't know a streamer, that streamer is hidden from your comparisons for 24 hours (tracked by hashed IP, not stored in plain text). Set `IP_HASH_SALT` in production.
 
 ## How voting maps to Glicko-2
 

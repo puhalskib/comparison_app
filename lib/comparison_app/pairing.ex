@@ -6,14 +6,21 @@ defmodule ComparisonApp.Pairing do
   alias ComparisonApp.Comparisons
   alias ComparisonApp.Streamers
   alias ComparisonApp.Streamers.Streamer
+  alias ComparisonApp.VoterExclusions
 
   @exploration_weight 0.7
   @exploration_comparison_cap 50
   @min_active_streamers 2
+  @pool_limit 100
 
-  @spec next_pair(String.t()) :: {:ok, {Streamer.t(), Streamer.t()}} | {:error, :not_enough_streamers}
-  def next_pair(session_id) do
-    streamers = Streamers.list_active()
+  @spec next_pair(String.t(), String.t() | nil) ::
+          {:ok, {Streamer.t(), Streamer.t()}} | {:error, :not_enough_streamers}
+  def next_pair(session_id, ip_hash \\ nil) do
+    streamers = Streamers.list_top_active(@pool_limit)
+    blocked = VoterExclusions.blocked_streamer_ids(ip_hash)
+
+    streamers =
+      Enum.reject(streamers, fn s -> MapSet.member?(blocked, s.id) end)
 
     if length(streamers) < @min_active_streamers do
       {:error, :not_enough_streamers}
