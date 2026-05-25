@@ -14,6 +14,7 @@ defmodule ComparisonApp.Streamers.SyncWorker do
       sync_curated()
       sync_top_live()
       Streamers.prune_active_to_top(100)
+      {:ok, _} = Oban.insert(ComparisonApp.Streamers.AvatarCacheWorker.new(%{}))
       :ok
     else
       :ok
@@ -49,13 +50,14 @@ defmodule ComparisonApp.Streamers.SyncWorker do
 
   defp upsert_users(users) do
     Enum.each(users, fn user ->
-      Streamers.upsert_from_twitch(%{
-        twitch_id: user["id"],
-        login: user["login"],
-        display_name: user["display_name"],
-        profile_image_url: user["profile_image_url"],
-        active: true
-      })
+      {:ok, _} =
+        Streamers.upsert_from_twitch(%{
+          twitch_id: user["id"],
+          login: user["login"],
+          display_name: user["display_name"],
+          profile_image_url: user["profile_image_url"],
+          active: true
+        })
     end)
   end
 

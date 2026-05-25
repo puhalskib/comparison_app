@@ -32,7 +32,7 @@ defmodule ComparisonAppWeb.StreamerComponents do
         />
         <div>
           <h2 class="card-title justify-center">{@streamer.display_name}</h2>
-          <p class="text-sm opacity-70">@{@streamer.login}</p>
+          <.twitch_login streamer={@streamer} class="text-sm" />
           <p class="text-xs mt-1">
             Rating {Float.round(@streamer.rating, 1)} · RD {Float.round(@streamer.rd, 0)}
           </p>
@@ -204,8 +204,31 @@ defmodule ComparisonAppWeb.StreamerComponents do
 
   def series_color(index), do: Enum.at(@chart_colors, rem(index, length(@chart_colors)))
 
+  attr :streamer, :map, required: true
+  attr :class, :string, default: nil
+
+  def twitch_login(assigns) do
+    ~H"""
+    <p class={["opacity-70", @class]}>
+      <a
+        href={twitch_url(@streamer)}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="link link-hover"
+      >
+        @{@streamer.login}
+      </a>
+    </p>
+    """
+  end
+
+  def twitch_url(%{login: login}) when is_binary(login) do
+    "https://www.twitch.tv/#{URI.encode(login)}"
+  end
+
+  def avatar_url(%{avatar_path: path}) when is_binary(path) and path != "", do: path
   def avatar_url(%{profile_image_url: url}) when is_binary(url) and url != "", do: url
-  def avatar_url(%{login: login}), do: "https://unavatar.io/twitch/#{login}"
+  def avatar_url(_), do: ~p"/images/default-streamer.svg"
 
   defp format_snapshot_time(%DateTime{} = dt) do
     Calendar.strftime(dt, "%Y-%m-%d %H:%M")

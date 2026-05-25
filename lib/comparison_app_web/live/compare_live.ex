@@ -22,7 +22,8 @@ defmodule ComparisonAppWeb.CompareLive do
         <div>
           <h1 class="text-2xl font-bold">Who is more likable?</h1>
           <p class="text-base-content/70 mt-1">
-            Pick a streamer, or say you don't know them. Votes update Glicko-2 ratings.
+            Pick a streamer, or say you don't know them.
+            <.link navigate={~p"/faq"} class="link link-hover">How it works</.link>
           </p>
         </div>
 
@@ -32,32 +33,34 @@ defmodule ComparisonAppWeb.CompareLive do
 
         <%= if @left && @right do %>
           <div class="grid md:grid-cols-2 gap-6">
-            <StreamerComponents.card streamer={@left} position={:left} voted={@voted} />
-            <StreamerComponents.card streamer={@right} position={:right} voted={@voted} />
+            <StreamerComponents.card streamer={@left} position={:left} />
+            <StreamerComponents.card streamer={@right} position={:right} />
           </div>
 
-          <div class="flex flex-wrap gap-2 justify-center">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 max-w-2xl mx-auto w-full">
             <button
-              :for={outcome <- [:unknown_left, :unknown_right, :unknown_both]}
-              class="btn btn-outline btn-sm"
+              :for={outcome <- [:unknown_left, :unknown_both, :unknown_right]}
+              class={[
+                "btn btn-outline btn-sm w-full",
+                outcome == :unknown_both && "btn-accent"
+              ]}
               phx-click="vote"
               phx-value-outcome={outcome}
-              disabled={@voted}
             >
               {unknown_label(outcome)}
             </button>
           </div>
-
-          <%= if @voted do %>
-            <div class="text-center">
-              <button class="btn btn-primary" phx-click="next_pair">Next pair</button>
-            </div>
-          <% end %>
         <% end %>
 
-        <p class="text-center">
-          <.link navigate={~p"/ratings"} class="link link-primary">View live ratings</.link>
-        </p>
+        <div class="pt-6 border-t border-base-300/60 flex justify-center">
+          <.link
+            navigate={~p"/ratings"}
+            class="btn btn-outline btn-secondary gap-2 px-6 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <.icon name="hero-chart-bar" class="size-5 opacity-80" />
+            View live ratings
+          </.link>
+        </div>
       </div>
     </Layouts.app>
     """
@@ -73,10 +76,6 @@ defmodule ComparisonAppWeb.CompareLive do
     handle_vote(socket, String.to_existing_atom(outcome_str), nil)
   end
 
-  def handle_event("next_pair", _params, socket) do
-    {:noreply, assign_pair(socket, socket.assigns.session_id, socket.assigns.ip_hash)}
-  end
-
   defp handle_vote(socket, ui_outcome, position) do
     ui_outcome =
       case {ui_outcome, position} do
@@ -85,14 +84,13 @@ defmodule ComparisonAppWeb.CompareLive do
         {other, _} -> other
       end
 
-    %{left: left, right: right, session_id: session_id, ip_hash: ip_hash, voted: false} =
-      socket.assigns
+    %{left: left, right: right, session_id: session_id, ip_hash: ip_hash} = socket.assigns
 
     outcome = Votes.map_ui_outcome(ui_outcome, left, right)
 
     case Engine.submit_vote(left, right, outcome, session_id, ip_hash) do
       {:ok, _} ->
-        {:noreply, assign(socket, voted: true)}
+        {:noreply, assign_pair(socket, session_id, ip_hash)}
 
       {:error, %Ecto.Changeset{errors: errors}} ->
         msg = format_changeset_errors(errors)
@@ -109,7 +107,6 @@ defmodule ComparisonAppWeb.CompareLive do
         assign(socket,
           left: left,
           right: right,
-          voted: false,
           error: nil,
           session_id: session_id
         )
@@ -118,7 +115,6 @@ defmodule ComparisonAppWeb.CompareLive do
         assign(socket,
           left: nil,
           right: nil,
-          voted: false,
           error: "Need at least two active streamers. Run seeds or Twitch sync.",
           session_id: session_id
         )

@@ -22,6 +22,7 @@ defmodule ComparisonAppWeb.Router do
     live_session :default, on_mount: {ComparisonAppWeb.LiveMount, :assign_session_id} do
       live "/", CompareLive, :index
       live "/ratings", RatingsLive, :index
+      live "/faq", FaqLive, :index
       live "/streamers/:id", StreamerLive, :show
     end
   end

@@ -57,13 +57,22 @@ defmodule ComparisonApp.Streamers do
         %Streamer{}
         |> Streamer.changeset(attrs)
         |> Repo.insert()
+        |> tap_cache_avatar()
 
       streamer ->
         streamer
         |> Streamer.changeset(Map.take(attrs, [:login, :display_name, :profile_image_url, :active]))
         |> Repo.update()
+        |> tap_cache_avatar()
     end
   end
+
+  defp tap_cache_avatar({:ok, %Streamer{} = streamer} = result) do
+    ComparisonApp.Streamers.AvatarCache.cache(streamer)
+    result
+  end
+
+  defp tap_cache_avatar(other), do: other
 
   def change(%Streamer{} = streamer, attrs \\ %{}) do
     Streamer.changeset(streamer, attrs)

@@ -7,10 +7,14 @@
 # General application configuration
 import Config
 
+uploads_root = Path.expand("../priv/uploads", __DIR__)
+
 config :comparison_app,
   ecto_repos: [ComparisonApp.Repo],
   generators: [timestamp_type: :utc_datetime],
   ip_hash_salt: System.get_env("IP_HASH_SALT") || "",
+  avatar_storage_dir: Path.join(uploads_root, "avatars"),
+  uploads_static_dir: uploads_root,
   curated_streamer_logins: [
     "ninja",
     "shroud",
@@ -30,7 +34,8 @@ config :comparison_app, Oban,
   plugins: [
     {Oban.Plugins.Cron,
      crontab: [
-       {"0 */6 * * *", ComparisonApp.Streamers.SyncWorker}
+       {"0 */6 * * *", ComparisonApp.Streamers.SyncWorker},
+       {"30 */6 * * *", ComparisonApp.Streamers.AvatarCacheWorker}
      ]}
   ]
 

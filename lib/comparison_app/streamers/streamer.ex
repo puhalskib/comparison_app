@@ -7,6 +7,7 @@ defmodule ComparisonApp.Streamers.Streamer do
     field :login, :string
     field :display_name, :string
     field :profile_image_url, :string
+    field :avatar_path, :string
     field :rating, :float, default: 1500.0
     field :rd, :float, default: 350.0
     field :volatility, :float, default: 0.06
@@ -18,7 +19,16 @@ defmodule ComparisonApp.Streamers.Streamer do
   end
 
   @required [:twitch_id, :login, :display_name]
-  @optional [:profile_image_url, :rating, :rd, :volatility, :comparison_count, :last_compared_at, :active]
+  @optional [
+    :profile_image_url,
+    :avatar_path,
+    :rating,
+    :rd,
+    :volatility,
+    :comparison_count,
+    :last_compared_at,
+    :active
+  ]
 
   def changeset(streamer, attrs) do
     streamer

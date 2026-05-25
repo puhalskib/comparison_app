@@ -37,15 +37,15 @@ defmodule ComparisonAppWeb.Layouts do
     ~H"""
     <header class="navbar px-4 sm:px-6 lg:px-8">
       <div class="flex-1">
-        <.link navigate={~p"/"} class="flex w-fit items-center gap-2">
-          <img src={~p"/images/logo.svg"} width="36" alt="" />
-          <span class="text-sm font-semibold">Streamer Likability</span>
+        <.link navigate={~p"/"} class="text-sm font-semibold hover:opacity-80">
+          Streamer Likability
         </.link>
       </div>
       <div class="flex-none">
         <ul class="flex px-1 gap-2 items-center">
           <li><.link navigate={~p"/"} class="btn btn-ghost btn-sm">Compare</.link></li>
           <li><.link navigate={~p"/ratings"} class="btn btn-ghost btn-sm">Ratings</.link></li>
+          <li><.link navigate={~p"/faq"} class="btn btn-ghost btn-sm">FAQ</.link></li>
           <li><.theme_toggle /></li>
         </ul>
       </div>

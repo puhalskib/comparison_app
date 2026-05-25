@@ -53,7 +53,7 @@ defmodule ComparisonAppWeb.StreamerLive do
           />
           <div>
             <h1 class="text-2xl font-bold">{@streamer.display_name}</h1>
-            <p class="opacity-70">@{@streamer.login}</p>
+            <StreamerComponents.twitch_login streamer={@streamer} />
             <p class="text-xs opacity-60 mt-1">{@period_label}</p>
           </div>
         </div>
